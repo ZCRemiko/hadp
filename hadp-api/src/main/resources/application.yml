@@ -1,0 +1,30 @@
+# ================================================================
+# Query API 服务配置 (Spring Boot application.yml)
+# ================================================================
+
+server:
+  port: 8081
+
+spring:
+  application:
+    name: hadp-api
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    deserialization:
+      fail-on-unknown-properties: false
+
+# ==================== HBase 配置 ====================
+hbase:
+  zookeeper:
+    # ZooKeeper 地址（HBase 通过 ZK 做分布式协调）
+    quorum: localhost
+
+# ==================== 日志配置 ====================
+logging:
+  level:
+    com.hadp: DEBUG
+    org.apache.hadoop: WARN
+    org.apache.hbase: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

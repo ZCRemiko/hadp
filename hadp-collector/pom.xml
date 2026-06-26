@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.hadp</groupId>
+        <artifactId>hadp-parent</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>hadp-collector</artifactId>
+    <packaging>jar</packaging>
+    <name>HADP Collector</name>
+    <description>日志采集服务：接收HTTP日志请求，写入HDFS</description>
+
+    <!--
+        职责：对外提供 REST API，接收客户端上报的用户行为日志，
+        验证后写入 HDFS 文件系统持久化存储。
+
+        技术栈：Spring Boot Web + Hadoop HDFS Client
+        端口：8080
+    -->
+    <dependencies>
+        <!-- Spring Boot Web：提供 REST API 能力（内嵌 Tomcat） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <!-- 排除默认的 Logback，避免与 Hadoop 日志冲突 -->
+        </dependency>
+
+        <!-- Hadoop HDFS 客户端：用于连接 HDFS 读写文件 -->
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-hdfs-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-common</artifactId>
+        </dependency>
+
+        <!-- 本项目公共模块 -->
+        <dependency>
+            <groupId>com.hadp</groupId>
+            <artifactId>hadp-common</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+                Spring Boot Maven Plugin：将应用打包为可执行 fat JAR
+                使用 "mvn package -pl hadp-collector" 可以单独打包此模块
+                运行：java -jar hadp-collector/target/hadp-collector-1.0.0.jar
+            -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring-boot.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

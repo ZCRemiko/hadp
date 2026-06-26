@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.hadp</groupId>
+        <artifactId>hadp-parent</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>hadp-common</artifactId>
+    <packaging>jar</packaging>
+    <name>HADP Common</name>
+    <description>公共模块：数据模型定义、HBase连接管理工具</description>
+
+    <!--
+        这个模块被所有其他模块依赖，提供：
+        1. 日志事件数据模型（LogEvent）
+        2. 统计结果数据模型（DailyStats, PageStats, HourlyStats）
+        3. HBase 连接管理器（HBaseConnectionManager）
+    -->
+    <dependencies>
+        <!-- Jackson：JSON 序列化/反序列化 -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
+
+        <!-- Lombok：通过注解自动生成 getter/setter/toString/构造器 -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- HBase 客户端：用于创建和管理 HBase 连接 -->
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-client</artifactId>
+        </dependency>
+
+        <!-- Hadoop 公共库：Configuration 类 -->
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-common</artifactId>
+        </dependency>
+
+        <!-- SLF4J API：日志门面 -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+    </dependencies>
+</project>

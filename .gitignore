@@ -1,0 +1,31 @@
+# ===== Docker 大文件 (~600MB each, 手动下载) =====
+docker/*.tar.gz
+docker/bins/*.tar.gz
+docker/gen-data.sh
+docker/scan.hbase
+docker/scan2.hbase
+docker/seed.hbase
+docker/seed2.hbase
+
+# ===== Maven 构建产物 =====
+target/
+dependency-reduced-pom.xml
+*.class
+*.jar
+*.war
+
+# ===== IDE 文件 =====
+.classpath
+.project
+.settings/
+.factorypath
+*.iml
+.idea/
+
+# ===== 日志 =====
+logs/
+*.log
+
+# ===== 系统文件 =====
+Thumbs.db
+.DS_Store

@@ -1,0 +1,182 @@
+services:
+  zookeeper:
+    image: zookeeper:3.7
+    container_name: zookeeper
+    restart: always
+    hostname: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_STANDALONE_ENABLED: "true"
+    networks:
+      - hadp_net
+
+  # ==================== Hadoop HDFS ====================
+  namenode:
+    build:
+      context: ./docker
+      dockerfile: hadoop-base.Dockerfile
+    container_name: namenode
+    restart: always
+    hostname: namenode
+    ports:
+      - "9870:9870"
+      - "9000:9000"
+    entrypoint: ["bash", "/scripts/entrypoint-namenode.sh"]
+    volumes:
+      - ./docker/scripts:/scripts
+      - nn_data:/opt/hadoop/data
+    networks:
+      - hadp_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9870"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  datanode1:
+    build:
+      context: ./docker
+      dockerfile: hadoop-base.Dockerfile
+    container_name: datanode1
+    restart: always
+    hostname: datanode1
+    entrypoint: ["bash", "/scripts/entrypoint-datanode.sh"]
+    volumes:
+      - ./docker/scripts:/scripts
+      - dn1_data:/opt/hadoop/data
+    networks:
+      - hadp_net
+    depends_on:
+      - namenode
+
+  datanode2:
+    build:
+      context: ./docker
+      dockerfile: hadoop-base.Dockerfile
+    container_name: datanode2
+    restart: always
+    hostname: datanode2
+    entrypoint: ["bash", "/scripts/entrypoint-datanode.sh"]
+    volumes:
+      - ./docker/scripts:/scripts
+      - dn2_data:/opt/hadoop/data
+    networks:
+      - hadp_net
+    depends_on:
+      - namenode
+
+  # ==================== Hadoop YARN ====================
+  resourcemanager:
+    build:
+      context: ./docker
+      dockerfile: hadoop-base.Dockerfile
+    container_name: resourcemanager
+    restart: always
+    hostname: resourcemanager
+    ports:
+      - "8088:8088"
+    entrypoint: ["bash", "/scripts/entrypoint-resourcemanager.sh"]
+    volumes:
+      - ./docker/scripts:/scripts
+    networks:
+      - hadp_net
+    depends_on:
+      - namenode
+
+  nodemanager1:
+    build:
+      context: ./docker
+      dockerfile: hadoop-base.Dockerfile
+    container_name: nodemanager1
+    restart: always
+    hostname: nodemanager1
+    entrypoint: ["bash", "/scripts/entrypoint-nodemanager.sh"]
+    volumes:
+      - ./docker/scripts:/scripts
+    networks:
+      - hadp_net
+    depends_on:
+      - resourcemanager
+
+  nodemanager2:
+    build:
+      context: ./docker
+      dockerfile: hadoop-base.Dockerfile
+    container_name: nodemanager2
+    restart: always
+    hostname: nodemanager2
+    entrypoint: ["bash", "/scripts/entrypoint-nodemanager.sh"]
+    volumes:
+      - ./docker/scripts:/scripts
+    networks:
+      - hadp_net
+    depends_on:
+      - resourcemanager
+
+  # ==================== HBase ====================
+  hbase-master:
+    build:
+      context: ./docker
+      dockerfile: hbase-base.Dockerfile
+    container_name: hbase-master
+    restart: always
+    hostname: hbase-master
+    ports:
+      - "16010:16010"
+    entrypoint: ["bash", "/scripts/entrypoint-hmaster.sh"]
+    volumes:
+      - ./docker/scripts:/scripts
+    networks:
+      - hadp_net
+    depends_on:
+      - zookeeper
+      - namenode
+
+  regionserver1:
+    build:
+      context: ./docker
+      dockerfile: hbase-base.Dockerfile
+    container_name: regionserver1
+    restart: always
+    hostname: regionserver1
+    ports:
+      - "16030:16030"
+      - "16020:16020"
+    entrypoint: ["bash", "/scripts/entrypoint-regionserver.sh"]
+    volumes:
+      - ./docker/scripts:/scripts
+    networks:
+      - hadp_net
+    depends_on:
+      - hbase-master
+      - zookeeper
+
+  regionserver2:
+    build:
+      context: ./docker
+      dockerfile: hbase-base.Dockerfile
+    container_name: regionserver2
+    restart: always
+    hostname: regionserver2
+    ports:
+      - "16031:16030"
+      - "16021:16020"
+    entrypoint: ["bash", "/scripts/entrypoint-regionserver.sh"]
+    volumes:
+      - ./docker/scripts:/scripts
+    networks:
+      - hadp_net
+    depends_on:
+      - hbase-master
+      - zookeeper
+
+volumes:
+  nn_data:
+  dn1_data:
+  dn2_data:
+
+networks:
+  hadp_net:
+    driver: bridge

@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- ============================================================ -->
+    <!-- 父POM：统一管理所有子模块的依赖版本和构建配置                  -->
+    <!-- Hadoop分布式数据库 + Spring Boot后端项目                      -->
+    <!-- ============================================================ -->
+    <groupId>com.hadp</groupId>
+    <artifactId>hadp-parent</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <name>HADP - Hadoop Analytics Data Platform</name>
+    <description>分布式用户行为日志分析平台</description>
+
+    <!-- ============================================================ -->
+    <!-- 子模块列表                                                    -->
+    <!-- hadp-common   : 公共数据模型和工具类                          -->
+    <!-- hadp-collector: 日志采集服务 (Spring Boot, 写入HDFS)          -->
+    <!-- hadp-analytics: MapReduce离线分析任务                        -->
+    <!-- hadp-api      : 查询API服务 (Spring Boot, 读取HBase)         -->
+    <!-- ============================================================ -->
+    <modules>
+        <module>hadp-common</module>
+        <module>hadp-collector</module>
+        <module>hadp-analytics</module>
+        <module>hadp-api</module>
+    </modules>
+
+    <!-- ============================================================ -->
+    <!-- 统一版本管理：所有子模块继承这些版本，避免冲突                 -->
+    <!-- ============================================================ -->
+    <properties>
+        <java.version>1.8</java.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!-- Spring Boot: 2.7.18 是最后一个支持 Java 8 的版本 -->
+        <spring-boot.version>2.7.18</spring-boot.version>
+
+        <!-- Hadoop: 与 Docker 环境中的 Hadoop 3.2.1 保持一致 -->
+        <hadoop.version>3.2.1</hadoop.version>
+
+        <!-- HBase: 2.4.x 支持 Java 8 和 Hadoop 3.2.x -->
+        <hbase.version>2.4.17</hbase.version>
+
+        <!-- 工具库 -->
+        <jackson.version>2.13.5</jackson.version>
+        <lombok.version>1.18.30</lombok.version>
+        <slf4j.version>1.7.36</slf4j.version>
+    </properties>
+
+    <!-- ============================================================ -->
+    <!-- dependencyManagement：统一声明依赖版本，子模块无需写版本号    -->
+    <!-- ============================================================ -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- Spring Boot BOM：自动管理所有Spring组件版本 -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Hadoop 公共库 -->
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-common</artifactId>
+                <version>${hadoop.version}</version>
+                <!--
+                    排除Hadoop自带的日志库，避免与Spring Boot的Logback冲突
+                    Hadoop默认使用Log4j 1.x，Spring Boot使用Logback+SLF4J
+                    同时排除旧版Jackson，使用Spring Boot统一管理的版本
+                -->
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.fasterxml.jackson.core</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <!-- Hadoop HDFS 客户端：用于读写HDFS文件 -->
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-hdfs-client</artifactId>
+                <version>${hadoop.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <!-- Hadoop MapReduce 客户端：用于编写和提交MapReduce任务 -->
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-mapreduce-client-core</artifactId>
+                <version>${hadoop.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <!-- HBase 客户端：用于读写HBase表 -->
+            <dependency>
+                <groupId>org.apache.hbase</groupId>
+                <artifactId>hbase-client</artifactId>
+                <version>${hbase.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                    <!-- 排除HBase自带的Hadoop，使用我们统一管理的版本 -->
+                    <exclusion>
+                        <groupId>org.apache.hadoop</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <!-- HBase MapReduce 集成：用于MapReduce直接写入HBase -->
+            <dependency>
+                <groupId>org.apache.hbase</groupId>
+                <artifactId>hbase-mapreduce</artifactId>
+                <version>${hbase.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.hadoop</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <!-- Jackson：JSON序列化/反序列化 -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+
+            <!-- Lombok：减少样板代码 -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+            </dependency>
+
+            <!-- 本项目内部模块 -->
+            <dependency>
+                <groupId>com.hadp</groupId>
+                <artifactId>hadp-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- ============================================================ -->
+    <!-- 所有子模块共享的构建配置                                      -->
+    <!-- ============================================================ -->
+    <build>
+        <plugins>
+            <!-- Maven编译器插件：设置Java 8编译 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+
+            <!--
+                资源文件过滤：允许在 resources 目录下使用 ${...} 占位符
+                在构建时替换为 pom.xml 中定义的属性值
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.hadp</groupId>
+        <artifactId>hadp-parent</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>hadp-analytics</artifactId>
+    <packaging>jar</packaging>
+    <name>HADP Analytics</name>
+    <description>MapReduce离线分析：读取HDFS原始日志，聚合计算后写入HBase</description>
+
+    <!--
+        职责：定期（或手动触发）对 HDFS 上的原始日志执行 MapReduce 离线分析，
+        计算 PV/UV、页面统计、小时级统计，结果写入 HBase。
+
+        运行方式：
+        hadoop jar hadp-analytics-1.0.0.jar com.hadp.analytics.AnalyticsRunner \
+            /user/hadp/logs/2024/05/28 zookeeper:2181
+    -->
+
+    <dependencies>
+        <!-- Hadoop MapReduce 核心（打包时标记为 provided，集群自带） -->
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-mapreduce-client-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-common</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- HBase 客户端 + MapReduce集成（需要打包进JAR，集群上可能没有） -->
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-mapreduce</artifactId>
+        </dependency>
+
+        <!-- 本项目公共模块 -->
+        <dependency>
+            <groupId>com.hadp</groupId>
+            <artifactId>hadp-common</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+                Maven Shade Plugin: 将所有依赖打包进一个 fat JAR
+                这样 hadoop jar 命令只需要这一个 JAR 文件即可运行
+
+                注意：Hadoop 自身的 JAR 标记为 provided，不会被打包
+                （因为 Hadoop 集群上已经有了）
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <!-- 合并多个 JAR 的 META-INF 文件，避免冲突 -->
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.hadp.analytics.AnalyticsRunner</mainClass>
+                                </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                            </transformers>
+                            <!-- 排除签名文件，避免运行时报错 -->
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
