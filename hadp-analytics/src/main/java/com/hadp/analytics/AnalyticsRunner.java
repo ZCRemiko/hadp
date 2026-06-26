@@ -8,23 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 离线分析任务调度器
- *
- * 依次执行三个 MapReduce 任务：
- * 1. DailyStatsJob  - 每日 PV/UV 统计
- * 2. PageStatsJob   - 页面 PV 统计
- * 3. HourlyStatsJob - 小时级 PV/UV 统计
- *
- * 【运行方式】
- * hadoop jar hadp-analytics-1.0.0.jar com.hadp.analytics.AnalyticsRunner \
- *     -input  /user/hadp/logs/2024/05/28 \
- *     -output /user/hadp/output/20240528 \
- *     -zk     zookeeper:2181
- *
- * 【参数说明】
- * -input  : HDFS 输入路径（原始日志所在目录）
- * -output : HDFS 输出根目录（各任务的输出会在此目录下创建子目录）
- * -zk     : ZooKeeper 地址（用于 HBase 连接）
+ * 离线分析任务调度器, 依次执行 DailyStats / PageStats / HourlyStats / Retention / Funnel.
  */
 public class AnalyticsRunner extends Configured implements Tool {
 
@@ -32,7 +16,6 @@ public class AnalyticsRunner extends Configured implements Tool {
 
     @Override
     public int run(String[] args) throws Exception {
-        // -------- 解析命令行参数 --------
         String inputPath = null;
         String outputBase = null;
         String zkQuorum = "localhost";
@@ -68,7 +51,6 @@ public class AnalyticsRunner extends Configured implements Tool {
         LOG.info("  ZooKeeper: {}", zkQuorum);
         LOG.info("==========================================");
 
-        // -------- 第1步：每日统计 --------
         LOG.info("[1/5] 开始每日统计任务...");
         boolean dailySuccess = runJob("DailyStats", inputPath, outputBase + "/daily", zkQuorum, "day");
         if (!dailySuccess) {
@@ -77,7 +59,6 @@ public class AnalyticsRunner extends Configured implements Tool {
         }
         LOG.info("[1/5] 每日统计任务完成 ✓");
 
-        // -------- 第2步：页面统计 --------
         LOG.info("[2/5] 开始页面统计任务...");
         boolean pageSuccess = runJob("PageStats", inputPath, outputBase + "/page", zkQuorum, "page");
         if (!pageSuccess) {
@@ -86,7 +67,6 @@ public class AnalyticsRunner extends Configured implements Tool {
         }
         LOG.info("[2/5] 页面统计任务完成 ✓");
 
-        // -------- 第3步：小时级统计 --------
         LOG.info("[3/5] 开始小时级统计任务...");
         boolean hourlySuccess = runJob("HourlyStats", inputPath, outputBase + "/hourly", zkQuorum, "hour");
         if (!hourlySuccess) {
@@ -95,7 +75,6 @@ public class AnalyticsRunner extends Configured implements Tool {
         }
         LOG.info("[3/5] 小时级统计任务完成 ✓");
 
-        // -------- 第4步：用户留存分析 --------
         LOG.info("[4/5] 开始用户留存分析任务...");
         boolean retentionSuccess = runJob("Retention", inputPath, outputBase + "/retention", zkQuorum, "retention");
         if (!retentionSuccess) {
@@ -104,7 +83,6 @@ public class AnalyticsRunner extends Configured implements Tool {
             LOG.info("[4/5] 用户留存分析任务完成 ✓");
         }
 
-        // -------- 第5步：漏斗转化分析 --------
         LOG.info("[5/5] 开始漏斗转化分析任务...");
         boolean funnelSuccess = runJob("Funnel", inputPath, outputBase + "/funnel", zkQuorum, "funnel");
         if (!funnelSuccess) {
@@ -150,7 +128,6 @@ public class AnalyticsRunner extends Configured implements Tool {
 
             boolean success = job.waitForCompletion(true);
 
-            // 打印任务计数器（Map数、Reduce数、处理记录数等）
             if (success) {
                 long mapCount = job.getCounters()
                         .findCounter("org.apache.hadoop.mapreduce.TaskCounter", "MAP_INPUT_RECORDS")

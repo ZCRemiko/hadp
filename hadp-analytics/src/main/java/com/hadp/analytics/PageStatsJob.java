@@ -25,15 +25,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * 页面统计 MapReduce 任务
- *
- * 统计每个页面每天被浏览的次数（PV）
- *
- * Mapper 输出: (日期|页面URL, "1")
- * Reducer 汇总: 对同一日期的同一页面，累加所有 "1" 即得到该页面当天的 PV
- *
- * HBase 写入表: page_stats
- * RowKey: date + "_" + pageUrl（方便按日期范围扫描）
+ * 页面统计 MapReduce 任务，计算每个页面每天的 PV。
+ * Mapper 输出 (日期|页面URL, "1")，Reducer 累加后写入 HBase page_stats。
+ * RowKey: date_pageUrl，便于按日期范围扫描。
  */
 public class PageStatsJob {
 
@@ -96,7 +90,6 @@ public class PageStatsJob {
         protected void reduce(Text key, Iterable<Text> values, Context context)
                 throws IOException, InterruptedException {
 
-            // 累加 PV
             long pv = 0;
             for (Text ignored : values) {
                 pv++;
@@ -107,11 +100,9 @@ public class PageStatsJob {
             String date = parts[0];
             String pageUrl = parts.length > 1 ? parts[1] : "";
 
-            // -------- 写入 HBase --------
             Table table = null;
             try {
                 table = hbaseConn.getTable(TableName.valueOf("page_stats"));
-                // RowKey: date + "_" + pageUrl
                 String rowKey = date + "_" + pageUrl;
                 Put put = new Put(Bytes.toBytes(rowKey));
                 put.addColumn(CF_STATS, Bytes.toBytes("pv"), Bytes.toBytes(pv));

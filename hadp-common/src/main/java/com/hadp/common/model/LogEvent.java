@@ -4,45 +4,16 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * 用户行为日志事件 - 核心数据模型
- *
- * 【什么是日志事件？】
- * 当用户在网站/App上进行操作时（浏览页面、点击按钮、搜索等），
- * 客户端会发送一条JSON格式的记录到后端，这就是"日志事件"。
- *
- * 【数据流向】
- * 客户端 HTTP POST --> Collector服务 --> 写入HDFS（原始日志文件）
- *                                         |
- *                                    MapReduce读取 --> 聚合计算 --> 写入HBase
- *                                                                    |
- *                                                               API查询返回
- *
- * 【JSON 格式示例】
- * {
- *   "userId": "user_001",
- *   "eventType": "page_view",
- *   "pageUrl": "/products/detail?id=123",
- *   "referrer": "https://www.baidu.com",
- *   "ipAddress": "192.168.1.100",
- *   "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
- *   "timestamp": 1716883200000,
- *   "duration": 5000
- * }
+ * 用户行为日志事件，客户端上报的 JSON 记录。
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LogEvent {
 
-    /** 用户唯一标识（用于计算UV - 独立访客数） */
+    /** 用户唯一标识 */
     @JsonProperty("userId")
     private String userId;
 
-    /**
-     * 事件类型
-     * page_view  - 页面浏览（主要分析对象）
-     * click      - 点击事件
-     * search     - 搜索事件
-     * purchase   - 购买事件
-     */
+    /** 事件类型：page_view / click / search / purchase */
     @JsonProperty("eventType")
     private String eventType;
 
@@ -62,30 +33,13 @@ public class LogEvent {
     @JsonProperty("userAgent")
     private String userAgent;
 
-    /**
-     * 事件时间戳（毫秒级Unix时间戳）
-     * 例如 1716883200000 表示 2024-05-28 16:00:00
-     */
+    /** 事件时间戳（毫秒级 Unix 时间戳） */
     @JsonProperty("timestamp")
     private Long timestamp;
 
     /** 页面停留时长（毫秒），-1 表示未知 */
     @JsonProperty("duration")
     private Long duration;
-
-    // ==================== Lombok 会自动生成以下代码 ====================
-    // 因为使用了 @Data 注解（安装Lombok插件后IDE可识别）
-    // 如果你没有安装Lombok，下面的代码就是Lombok会自动生成的：
-    //
-    // public LogEvent() {}
-    // public String getUserId() { return userId; }
-    // public void setUserId(String userId) { this.userId = userId; }
-    // ... (所有字段的 getter/setter)
-    // public String toString() { ... }
-    // public boolean equals(Object o) { ... }
-    // public int hashCode() { ... }
-
-    // 如果你没有安装 Lombok 插件，请取消下面所有注释：
 
     public LogEvent() {
     }

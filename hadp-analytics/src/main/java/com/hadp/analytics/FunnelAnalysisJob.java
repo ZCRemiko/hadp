@@ -25,17 +25,9 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
- * 漏斗转化分析 MapReduce 任务
- *
- * 分析用户在一组连续步骤中的转化率
- * 默认漏斗: /home → /products → /cart → /checkout
- *
- * Mapper 输出: (userId, step|date) — 标记用户在哪天到达了哪个步骤
- * Reducer:  对同一用户, 排重最高步骤, 累计每个步骤的到达人数
- * 写入 HBase funnel_stats 表
- *
- * RowKey: date_step (例 "20260601_0" = 第0步, "20260601_1" = 第1步)
- * 值:     users (到达该步骤的用户数), rate (相对于上一步的转化率*10000)
+ * 漏斗转化分析 MapReduce 任务.
+ * 默认漏斗: /home → /products → /cart → /checkout.
+ * RowKey: date_step, 写入 HBase funnel_stats 表.
  */
 public class FunnelAnalysisJob {
 
@@ -45,7 +37,7 @@ public class FunnelAnalysisJob {
             ThreadLocal.withInitial(() -> new SimpleDateFormat("yyyyMMdd"));
     private static final byte[] CF = Bytes.toBytes("stats");
 
-    // 漏斗步骤定义 (顺序重要, 越后面步骤号越大)
+    // Funnel steps ordered by depth (higher index = deeper)
     private static final String[] FUNNEL_STEPS = {"/home", "/products", "/cart", "/checkout"};
 
     public static class FunnelMapper extends Mapper<LongWritable, Text, Text, Text> {
@@ -62,7 +54,6 @@ public class FunnelAnalysisJob {
                 if (event.getUserId() == null || event.getTimestamp() == null || event.getPageUrl() == null) return;
 
                 String pageUrl = event.getPageUrl();
-                // 检查是否匹配漏斗中的某个步骤
                 int step = -1;
                 for (int i = FUNNEL_STEPS.length - 1; i >= 0; i--) {
                     if (pageUrl.contains(FUNNEL_STEPS[i])) {
@@ -70,7 +61,7 @@ public class FunnelAnalysisJob {
                         break;
                     }
                 }
-                if (step < 0) return; // 不在漏斗中, 跳过
+                if (step < 0) return;
 
                 String date = DATE_FORMAT.get().format(new Date(event.getTimestamp()));
                 outKey.set(event.getUserId());
@@ -99,7 +90,6 @@ public class FunnelAnalysisJob {
         @Override
         protected void reduce(Text key, Iterable<Text> values, Context context)
                 throws IOException, InterruptedException {
-            // 找该用户到达的最高漏斗步骤 (每天取最高)
             Map<String, Integer> maxStepPerDay = new HashMap<>();
             for (Text v : values) {
                 String[] parts = v.toString().split("\\|", 2);
@@ -108,18 +98,16 @@ public class FunnelAnalysisJob {
                 maxStepPerDay.merge(date, step, Math::max);
             }
 
-            // 为该用户每天的最高步骤计数
             for (Map.Entry<String, Integer> entry : maxStepPerDay.entrySet()) {
                 String date = entry.getKey();
                 int maxStep = entry.getValue();
-                // 该用户经过了 steps 0..maxStep 所有步骤
                 for (int s = 0; s <= maxStep; s++) {
                     String rowKey = date + "_" + s;
                     try (Table table = hbaseConn.getTable(TableName.valueOf("funnel_stats"))) {
                         Put put = new Put(Bytes.toBytes(rowKey));
                         put.addColumn(CF, Bytes.toBytes("step"), Bytes.toBytes(s));
                         put.addColumn(CF, Bytes.toBytes("url"), Bytes.toBytes(FUNNEL_STEPS[s]));
-                        put.addColumn(CF, Bytes.toBytes("c"), Bytes.toBytes(1L)); // 每条记录贡献1
+                        put.addColumn(CF, Bytes.toBytes("c"), Bytes.toBytes(1L));
                         table.put(put);
                     }
                 }

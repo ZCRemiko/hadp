@@ -10,10 +10,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import javax.annotation.PostConstruct;
 
 /**
- * API 模块启动类 - 查询服务
- *
- * 提供 REST API 查询 HBase 中的分析结果
- * 启动后自动初始化 HBase 表结构
+ * API 模块启动类, 提供 HBase 分析结果查询服务.
  */
 @SpringBootApplication
 public class ApiApplication {
@@ -27,10 +24,7 @@ public class ApiApplication {
         SpringApplication.run(ApiApplication.class, args);
     }
 
-    /**
-     * 服务启动后自动创建 HBase 表
-     * 如果表已存在则跳过（避免报错）
-     */
+    /** 启动后自动初始化 HBase 表. */
     @PostConstruct
     public void init() {
         try {

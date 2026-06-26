@@ -25,15 +25,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * 小时级统计 MapReduce 任务
- *
- * 按小时统计 PV 和 UV，用于流量监控和异常检测
- *
- * key 格式: "yyyyMMddHH"（例如 "2024052816"）
- * 比每日统计更细粒度，便于发现峰值时段
- *
- * HBase 表: hourly_stats
- * RowKey: yyyyMMddHH
+ * 小时级 PV/UV 统计 MapReduce 任务.
+ * RowKey: yyyyMMddHH, 写入 HBase hourly_stats 表.
  */
 public class HourlyStatsJob {
 
@@ -46,9 +39,7 @@ public class HourlyStatsJob {
 
     private static final byte[] CF_STATS = Bytes.toBytes("stats");
 
-    /**
-     * Mapper: 提取小时作为 key
-     */
+    /** Mapper: 按小时提取 RowKey, 输出 PV 计数和 UV 去重标记. */
     public static class HourMapper extends Mapper<LongWritable, Text, Text, Text> {
 
         private final Text outputKey = new Text();
@@ -69,10 +60,8 @@ public class HourlyStatsJob {
                 String hourStr = HOUR_FORMAT.get().format(new Date(event.getTimestamp()));
                 outputKey.set(hourStr);
 
-                // PV 计数
                 context.write(outputKey, pvValue);
 
-                // UV 标记（用于去重）
                 uvValue.set("USER:" + event.getUserId());
                 context.write(outputKey, uvValue);
 
@@ -83,9 +72,7 @@ public class HourlyStatsJob {
         }
     }
 
-    /**
-     * Reducer: 聚合同一小时的 PV 和 UV
-     */
+    /** Reducer: 聚合同一小时的 PV/UV, 写入 HBase. */
     public static class HourReducer extends Reducer<Text, Text, Text, Text> {
 
         private Connection hbaseConn;
@@ -119,7 +106,6 @@ public class HourlyStatsJob {
             long uv = uniqueUsers.size();
             String hourStr = key.toString();
 
-            // -------- 写入 HBase hourly_stats 表 --------
             Table table = null;
             try {
                 table = hbaseConn.getTable(TableName.valueOf("hourly_stats"));

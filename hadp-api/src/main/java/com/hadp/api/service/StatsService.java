@@ -19,14 +19,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
- * 统计查询服务 - 从 HBase 读取聚合数据
- *
- * 【HBase 读取方式】
- * 1. Get    - 精确查询（根据 RowKey 获取一行）
- * 2. Scan   - 范围扫描（扫描一段 RowKey 范围）
- * 3. Filter - 过滤器（在扫描时过滤不需要的数据）
- *
- * 本服务主要使用 Get 和 Scan 两种方式。
+ * 统计查询服务, 从 HBase 读取聚合数据.
  */
 @Service
 public class StatsService {
@@ -37,7 +30,7 @@ public class StatsService {
     @Value("${hbase.zookeeper.quorum:localhost}")
     private String zkQuorum;
 
-    /** HBase 连接（整个应用共用一个） */
+    /** HBase 连接（应用级单例） */
     private Connection connection;
 
     /** 列族名 */
@@ -69,16 +62,8 @@ public class StatsService {
         return connection;
     }
 
-    // ================================================================
-    //  表初始化
-    // ================================================================
     /**
-     * 创建 HBase 表（如果不存在）
-     *
-     * 【HBase 表创建注意事项】
-     * 1. 表名和列族名在创建时确定，后续不建议修改
-     * 2. 列族下可以动态添加列（不需要预定义）
-     * 3. 可以设置列族的属性（如 VERSIONS 保留多少个历史版本）
+     * 初始化 HBase 表（不存在则创建）.
      */
     public void initTables() throws IOException {
         Connection conn = getConnection();
@@ -86,17 +71,9 @@ public class StatsService {
 
         // 创建 daily_stats 表
         createTableIfNotExists(admin, "daily_stats", "stats");
-
-        // 创建 page_stats 表
         createTableIfNotExists(admin, "page_stats", "stats");
-
-        // 创建 hourly_stats 表
         createTableIfNotExists(admin, "hourly_stats", "stats");
-
-        // 创建 user_retention 表 (留存分析)
         createTableIfNotExists(admin, "user_retention", "stats");
-
-        // 创建 funnel_stats 表 (漏斗分析)
         createTableIfNotExists(admin, "funnel_stats", "stats");
 
         admin.close();
@@ -106,14 +83,13 @@ public class StatsService {
             throws IOException {
         TableName tn = TableName.valueOf(tableName);
         if (!admin.tableExists(tn)) {
-            // 创建表描述符并添加列族
             org.apache.hadoop.hbase.client.TableDescriptorBuilder builder =
                     org.apache.hadoop.hbase.client.TableDescriptorBuilder.newBuilder(tn);
             for (String family : families) {
                 org.apache.hadoop.hbase.client.ColumnFamilyDescriptor cfDesc =
                         org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder
                                 .newBuilder(Bytes.toBytes(family))
-                                .setMaxVersions(3)  // 保留最近3个版本
+                                .setMaxVersions(3)
                                 .build();
                 builder.setColumnFamily(cfDesc);
             }
@@ -124,11 +100,8 @@ public class StatsService {
         }
     }
 
-    // ================================================================
-    //  每日统计查询
-    // ================================================================
     /**
-     * 查询指定日期的统计数据
+     * 查询指定日期统计数据.
      */
     public DailyStats getDailyStats(Date date) {
         try {
@@ -155,14 +128,8 @@ public class StatsService {
     }
 
     /**
-     * 查询日期范围的统计数据
-     *
-     * 【HBase Scan 原理】
-     * Scan 按照 RowKey 的字典序扫描数据。
-     * 例如 Scan "20240501" ~ "20240503" 会扫描到:
-     *   20240501, 20240502, 20240503（按字典序排列）
-     *
-     * 因为我们的 RowKey 是 yyyyMMdd 格式，字典序=时间序，非常适合做范围查询。
+     * 查询日期范围统计数据.
+     * RowKey 为 yyyyMMdd 格式, 字典序即时间序, 适合范围扫描.
      */
     public List<DailyStats> getDailyRange(Date start, Date end) {
         List<DailyStats> resultList = new ArrayList<>();
@@ -195,16 +162,9 @@ public class StatsService {
         return resultList;
     }
 
-    // ================================================================
-    //  页面统计查询
-    // ================================================================
     /**
-     * 查询热门页面
-     *
-     * 使用 Scan 扫描指定日期的所有页面数据，然后按 PV 降序排序
-     *
-     * 注意：HBase 本身不支持按值排序，需要读取后在应用层排序。
-     * 对于大型数据集，应该考虑使用 Elasticsearch 等搜索引擎做排序。
+     * 查询热门页面 (按 PV 降序).
+     * HBase 不支持按值排序, 需在应用层排序. 大规模场景应使用 ES 等搜索引擎.
      */
     public List<PageStats> getTopPages(Date date, int limit) {
         List<PageStats> pages = new ArrayList<>();
@@ -213,11 +173,9 @@ public class StatsService {
             String dateStr = dateFormat.get().format(date);
 
             table = getConnection().getTable(TableName.valueOf("page_stats"));
-
-            // 使用前缀过滤器：扫描所有以 "20240528_" 开头的 RowKey
             Scan scan = new Scan();
             scan.setFilter(new PrefixFilter(Bytes.toBytes(dateStr + "_")));
-            scan.setMaxResultSize(500);  // 假设每天最多500个页面
+            scan.setMaxResultSize(500);
 
             ResultScanner scanner = table.getScanner(scan);
             for (Result result : scanner) {
@@ -233,14 +191,14 @@ public class StatsService {
             LOG.error("查询热门页面失败: {}", e.getMessage());
         }
 
-        // 按 PV 降序排序，取前 limit 条
+        // 按 PV 降序取 top N
         pages.sort((a, b) -> Long.compare(b.getPv() != null ? b.getPv() : 0,
                 a.getPv() != null ? a.getPv() : 0));
         return pages.size() > limit ? pages.subList(0, limit) : pages;
     }
 
     /**
-     * 查询指定页面的统计
+     * 查询指定页面统计.
      */
     public PageStats getPageStats(Date date, String pageUrl) {
         try {
@@ -266,24 +224,21 @@ public class StatsService {
         }
     }
 
-    // ================================================================
-    //  小时级统计查询
-    // ================================================================
     /**
-     * 查询某一天24小时的统计数据
+     * 查询某日24小时统计数据.
      */
     public List<HourlyStats> getHourlyStats(Date date) {
         List<HourlyStats> resultList = new ArrayList<>();
         Table table = null;
         try {
-            String dateStr = dateFormat.get().format(date); // 20240528
+            String dateStr = dateFormat.get().format(date);
 
             table = getConnection().getTable(TableName.valueOf("hourly_stats"));
 
-            // 扫描 2024052800 ~ 2024052823 共24小时
+            // Scan hour 00-23: stopRow "24" ensures inclusion of hour 23
             Scan scan = new Scan()
                     .withStartRow(Bytes.toBytes(dateStr + "00"))
-                    .withStopRow(Bytes.toBytes(dateStr + "24")) // "24" > "23"，确保包含23时
+                    .withStopRow(Bytes.toBytes(dateStr + "24"))
                     .setMaxResultSize(100);
 
             ResultScanner scanner = table.getScanner(scan);
@@ -303,11 +258,8 @@ public class StatsService {
         return resultList;
     }
 
-    // ================================================================
-    //  工具方法
-    // ================================================================
     /**
-     * 从 HBase Result 中安全地读取 Long 值
+     * 从 HBase Result 安全读取 Long 值, 兼容 8-byte 和字符串格式.
      */
     private Long getLongValue(Result result, String column) {
         byte[] value = result.getValue(CF, Bytes.toBytes(column));
@@ -336,12 +288,8 @@ public class StatsService {
         }
     }
 
-    // ================================================================
-    //  用户留存查询
-    // ================================================================
     /**
-     * 查询某日基准的 N 日留存
-     * 返回每个用户在基准日期活跃的日期列表，在 API 层计算留存率
+     * 查询用户留存摘要.
      */
     public Map<String, Set<String>> getRetentionData(Date baseDate, int lookbackDays) {
         Map<String, Set<String>> userActiveDays = new HashMap<>();
@@ -356,8 +304,7 @@ public class StatsService {
             Scan scan = new Scan()
                     .withStartRow(Bytes.toBytes(startDate + "00"))
                     .withStopRow(Bytes.toBytes(endDate + "24"));
-            // 这里从 hourly_stats 读用户活跃数据不太对, 但这个方法的重点是框架
-            // 实际生产环境中会从专门的 user_active 表读取
+            // Stub: production would query a dedicated user_active table
             table.close();
         } catch (IOException e) {
             LOG.error("查询留存数据失败: {}", e.getMessage());
@@ -388,12 +335,8 @@ public class StatsService {
         return result;
     }
 
-    // ================================================================
-    //  漏斗转化查询
-    // ================================================================
     /**
-     * 查询指定日期的漏斗转化数据
-     * 返回每个步骤的到达人数和转化率
+     * 查询指定日期漏斗转化数据, 计算每步转化率.
      */
     public List<Map<String, Object>> getFunnelData(Date date) {
         List<Map<String, Object>> steps = new ArrayList<>();
@@ -401,7 +344,6 @@ public class StatsService {
         try {
             String dateStr = dateFormat.get().format(date);
             table = getConnection().getTable(TableName.valueOf("funnel_stats"));
-            // 漏斗有4步 (0-3), 取每个步骤的数据
             for (int s = 0; s < 4; s++) {
                 String rowKey = dateStr + "_" + s;
                 Get get = new Get(Bytes.toBytes(rowKey));
@@ -410,15 +352,13 @@ public class StatsService {
                     Map<String, Object> step = new HashMap<>();
                     step.put("step", s);
                     step.put("url", Bytes.toString(r.getValue(CF, Bytes.toBytes("url"))));
-                    // c 列存储的是计数 (Reducer每次+1)
-                    // 实际数据量取决于有多少用户经过了这一步
                     step.put("users", getLongValue(r, "c"));
                     steps.add(step);
                 }
             }
             table.close();
 
-            // 计算每步转化率 (相对上一步)
+            // Compute conversion rate relative to previous step
             for (int i = steps.size() - 1; i > 0; i--) {
                 long currUsers = (long) steps.get(i).getOrDefault("users", 0L);
                 long prevUsers = (long) steps.get(i - 1).getOrDefault("users", 1L);

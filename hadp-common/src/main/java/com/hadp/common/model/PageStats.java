@@ -1,17 +1,9 @@
 package com.hadp.common.model;
 
 /**
- * 页面统计结果 - 存储在 HBase 表 "page_stats" 中
- *
- * 【HBase 表设计】
- * 表名: page_stats
- * RowKey: yyyyMMdd + "_" + MD5(pageUrl前8位)
- *   例如: "20240528_a1b2c3d4"
- *   这样做的好处是：相同日期的数据物理上存储在一起，查询高效
- * 列族: stats
- *   列: stats:pv          - 该页面被浏览的次数
- *   列: stats:avgDuration - 该页面平均停留时长
- *   列: stats:uniqueUsers - 访问该页面的独立用户数
+ * 页面统计结果，存储在 HBase 表 page_stats。
+ * RowKey: yyyyMMdd_MD5(pageUrl前8位)，相同日期数据物理相邻以提升查询效率。
+ * 列族 stats，列 pv/avgDuration/uniqueUsers。
  */
 public class PageStats {
 

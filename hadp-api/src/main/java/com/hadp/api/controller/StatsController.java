@@ -17,10 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 统计查询 REST Controller
- *
- * 提供对 HBase 聚合数据的查询接口
- * 端口: 8081
+ * 统计查询 REST Controller.
  */
 @RestController
 @RequestMapping("/api/stats")
@@ -31,9 +28,7 @@ public class StatsController {
     @Autowired
     private StatsService statsService;
 
-    /**
-     * 健康检查
-     */
+    /** Health check. */
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {
         Map<String, Object> result = new HashMap<>();
@@ -43,22 +38,7 @@ public class StatsController {
         return ResponseEntity.ok(result);
     }
 
-    // ==================== 每日统计 ====================
-
-    /**
-     * 查询指定日期的每日统计（PV/UV）
-     *
-     * GET /api/stats/daily?date=2024-05-28
-     *
-     * 响应示例:
-     * {
-     *   "date": "20240528",
-     *   "pv": 15000,
-     *   "uv": 3200,
-     *   "avgDuration": 45000,
-     *   "totalEvents": 18000
-     * }
-     */
+    /** GET /api/stats/daily?date=yyyy-MM-dd */
     @GetMapping("/daily")
     public ResponseEntity<Map<String, Object>> getDailyStats(
             @RequestParam("date") @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
@@ -79,20 +59,7 @@ public class StatsController {
         return ResponseEntity.ok(result);
     }
 
-    /**
-     * 查询日期范围的每日统计
-     *
-     * GET /api/stats/daily/range?start=2024-05-01&end=2024-05-28
-     *
-     * 响应示例:
-     * {
-     *   "items": [
-     *     {"date":"20240501","pv":12000,"uv":3000},
-     *     {"date":"20240502","pv":13500,"uv":3100},
-     *     ...
-     *   ]
-     * }
-     */
+    /** GET /api/stats/daily/range?start=yyyy-MM-dd&end=yyyy-MM-dd */
     @GetMapping("/daily/range")
     public ResponseEntity<Map<String, Object>> getDailyRange(
             @RequestParam("start") @DateTimeFormat(pattern = "yyyy-MM-dd") Date start,
@@ -109,13 +76,7 @@ public class StatsController {
         return ResponseEntity.ok(result);
     }
 
-    // ==================== 页面统计 ====================
-
-    /**
-     * 查询热门页面（按 PV 降序）
-     *
-     * GET /api/stats/pages/top?date=2024-05-28&limit=10
-     */
+    /** GET /api/stats/pages/top?date=yyyy-MM-dd&limit=N */
     @GetMapping("/pages/top")
     public ResponseEntity<Map<String, Object>> getTopPages(
             @RequestParam("date") @DateTimeFormat(pattern = "yyyy-MM-dd") Date date,
@@ -131,11 +92,7 @@ public class StatsController {
         return ResponseEntity.ok(result);
     }
 
-    /**
-     * 查询指定页面的统计信息
-     *
-     * GET /api/stats/pages/detail?date=2024-05-28&url=/home
-     */
+    /** GET /api/stats/pages/detail?date=yyyy-MM-dd&url=/path */
     @GetMapping("/pages/detail")
     public ResponseEntity<Map<String, Object>> getPageDetail(
             @RequestParam("date") @DateTimeFormat(pattern = "yyyy-MM-dd") Date date,
@@ -157,23 +114,7 @@ public class StatsController {
         return ResponseEntity.ok(result);
     }
 
-    // ==================== 小时级统计 ====================
-
-    /**
-     * 查询某一天各小时的 PV/UV 趋势
-     *
-     * GET /api/stats/hourly?date=2024-05-28
-     *
-     * 响应示例:
-     * {
-     *   "date": "20240528",
-     *   "items": [
-     *     {"dateHour":"2024052800","pv":500,"uv":200},
-     *     {"dateHour":"2024052801","pv":300,"uv":150},
-     *     ...
-     *   ]
-     * }
-     */
+    /** GET /api/stats/hourly?date=yyyy-MM-dd */
     @GetMapping("/hourly")
     public ResponseEntity<Map<String, Object>> getHourlyStats(
             @RequestParam("date") @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
@@ -188,13 +129,7 @@ public class StatsController {
         return ResponseEntity.ok(result);
     }
 
-    // ==================== 留存分析 ====================
-
-    /**
-     * 查询指定日期的用户留存概览
-     *
-     * GET /api/stats/retention?date=2026-06-01
-     */
+    /** GET /api/stats/retention?date=yyyy-MM-dd */
     @GetMapping("/retention")
     public ResponseEntity<Map<String, Object>> getRetention(
             @RequestParam("date") @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
@@ -207,21 +142,7 @@ public class StatsController {
         return ResponseEntity.ok(result);
     }
 
-    // ==================== 漏斗分析 ====================
-
-    /**
-     * 查询指定日期的漏斗转化数据
-     *
-     * GET /api/stats/funnel?date=2026-06-01
-     *
-     * 响应:
-     * [
-     *   {"step":0, "url":"/home",     "users":1000, "rate":100},
-     *   {"step":1, "url":"/products", "users":500,  "rate":50},
-     *   {"step":2, "url":"/cart",     "users":200,  "rate":40},
-     *   {"step":3, "url":"/checkout", "users":80,   "rate":40}
-     * ]
-     */
+    /** GET /api/stats/funnel?date=yyyy-MM-dd */
     @GetMapping("/funnel")
     public ResponseEntity<Map<String, Object>> getFunnel(
             @RequestParam("date") @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
@@ -234,13 +155,7 @@ public class StatsController {
         return ResponseEntity.ok(result);
     }
 
-    // ==================== 管理接口 ====================
-
-    /**
-     * 手动初始化/重建 HBase 表
-     *
-     * POST /api/admin/init
-     */
+    /** POST /api/admin/init */
     @PostMapping("/admin/init")
     public ResponseEntity<Map<String, Object>> initTables() {
         try {

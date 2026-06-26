@@ -27,18 +27,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * 用户留存分析 MapReduce 任务
- *
- * 计算某日活跃用户在第 N 天的留存率
- *
- * 数据流:
- *   输入: HDFS 原始日志 (多天数据)
- *   Map:    (userId, date) — 标记每个用户在哪天活跃过
- *   Reduce: 对同一用户的活跃日期去重, 计算 baseDate+N 天是否仍活跃
- *   输出:   HBase user_retention 表 + HDFS
- *
- * RowKey: baseDate_activeDate (例 "20260601_20260602" = 次日留存)
- * 值:     retained_users (留存人数), base_users (基准日活跃人数), rate (留存率*10000)
+ * 用户留存分析 MapReduce 任务.
+ * RowKey: baseDate_activeDate, 写入 HBase user_retention 表.
  */
 public class RetentionAnalysisJob {
 

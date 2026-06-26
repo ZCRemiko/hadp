@@ -1,20 +1,8 @@
 package com.hadp.common.model;
 
 /**
- * 小时级统计结果 - 存储在 HBase 表 "hourly_stats" 中
- *
- * 【HBase 表设计】
- * 表名: hourly_stats
- * RowKey: yyyyMMddHH (例如 "2024052816" 表示2024年5月28日16时)
- * 列族: stats
- *   列: stats:pv          - 该小时内的页面浏览量
- *   列: stats:uv          - 该小时内的独立访客数
- *   列: stats:totalEvents - 该小时内的事件总数
- *
- * 【为什么需要小时级统计？】
- * 1. 流量监控：发现流量突增/突降的时间段
- * 2. 容量规划：分析各时段负载，合理分配服务器资源
- * 3. 异常检测：凌晨3点突然出现大量请求 → 可能是攻击
+ * 小时级统计结果，存储在 HBase 表 hourly_stats。
+ * RowKey: yyyyMMddHH，列族 stats，列 pv/uv/totalEvents。
  */
 public class HourlyStats {
 
