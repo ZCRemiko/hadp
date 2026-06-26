@@ -3,36 +3,27 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
-    <!-- ============================================================ -->
-    <!-- 父POM：统一管理所有子模块的依赖版本和构建配置                  -->
-    <!-- Hadoop分布式数据库 + Spring Boot后端项目                      -->
-    <!-- ============================================================ -->
+    <!-- 鐖禤OM锛氱粺涓€绠＄悊鎵€鏈夊瓙妯″潡鐨勪緷璧栫増鏈拰鏋勫缓閰嶇疆                  -->
+    <!-- Hadoop鍒嗗竷寮忔暟鎹簱 + Spring Boot鍚庣椤圭洰                      -->
     <groupId>com.hadp</groupId>
     <artifactId>hadp-parent</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
 
     <name>HADP - Hadoop Analytics Data Platform</name>
-    <description>分布式用户行为日志分析平台</description>
-
-    <!-- ============================================================ -->
-    <!-- 子模块列表                                                    -->
-    <!-- hadp-common   : 公共数据模型和工具类                          -->
-    <!-- hadp-collector: 日志采集服务 (Spring Boot, 写入HDFS)          -->
-    <!-- hadp-analytics: MapReduce离线分析任务                        -->
-    <!-- hadp-api      : 查询API服务 (Spring Boot, 读取HBase)         -->
-    <!-- ============================================================ -->
+    <description>鍒嗗竷寮忕敤鎴疯涓烘棩蹇楀垎鏋愬钩鍙?/description>
+    <!-- 瀛愭ā鍧楀垪琛?                                                   -->
+    <!-- hadp-common   : 鍏叡鏁版嵁妯″瀷鍜屽伐鍏风被                          -->
+    <!-- hadp-collector: 鏃ュ織閲囬泦鏈嶅姟 (Spring Boot, 鍐欏叆HDFS)          -->
+    <!-- hadp-analytics: MapReduce绂荤嚎鍒嗘瀽浠诲姟                        -->
+    <!-- hadp-api      : 鏌ヨAPI鏈嶅姟 (Spring Boot, 璇诲彇HBase)         -->
     <modules>
         <module>hadp-common</module>
         <module>hadp-collector</module>
         <module>hadp-analytics</module>
         <module>hadp-api</module>
     </modules>
-
-    <!-- ============================================================ -->
-    <!-- 统一版本管理：所有子模块继承这些版本，避免冲突                 -->
-    <!-- ============================================================ -->
+    <!-- 缁熶竴鐗堟湰绠＄悊锛氭墍鏈夊瓙妯″潡缁ф壙杩欎簺鐗堟湰锛岄伩鍏嶅啿绐?                -->
     <properties>
         <java.version>1.8</java.version>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -40,27 +31,24 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <!-- Spring Boot: 2.7.18 是最后一个支持 Java 8 的版本 -->
+        <!-- Spring Boot: 2.7.18 鏄渶鍚庝竴涓敮鎸?Java 8 鐨勭増鏈?-->
         <spring-boot.version>2.7.18</spring-boot.version>
 
-        <!-- Hadoop: 与 Docker 环境中的 Hadoop 3.2.1 保持一致 -->
+        <!-- Hadoop: 涓?Docker 鐜涓殑 Hadoop 3.2.1 淇濇寔涓€鑷?-->
         <hadoop.version>3.2.1</hadoop.version>
 
-        <!-- HBase: 2.4.x 支持 Java 8 和 Hadoop 3.2.x -->
+        <!-- HBase: 2.4.x 鏀寔 Java 8 鍜?Hadoop 3.2.x -->
         <hbase.version>2.4.17</hbase.version>
 
-        <!-- 工具库 -->
+        <!-- 宸ュ叿搴?-->
         <jackson.version>2.13.5</jackson.version>
         <lombok.version>1.18.30</lombok.version>
         <slf4j.version>1.7.36</slf4j.version>
     </properties>
-
-    <!-- ============================================================ -->
-    <!-- dependencyManagement：统一声明依赖版本，子模块无需写版本号    -->
-    <!-- ============================================================ -->
+    <!-- dependencyManagement锛氱粺涓€澹版槑渚濊禆鐗堟湰锛屽瓙妯″潡鏃犻渶鍐欑増鏈彿    -->
     <dependencyManagement>
         <dependencies>
-            <!-- Spring Boot BOM：自动管理所有Spring组件版本 -->
+            <!-- Spring Boot BOM锛氳嚜鍔ㄧ鐞嗘墍鏈塖pring缁勪欢鐗堟湰 -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -69,16 +57,15 @@
                 <scope>import</scope>
             </dependency>
 
-            <!-- Hadoop 公共库 -->
+            <!-- Hadoop 鍏叡搴?-->
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-common</artifactId>
                 <version>${hadoop.version}</version>
                 <!--
-                    排除Hadoop自带的日志库，避免与Spring Boot的Logback冲突
-                    Hadoop默认使用Log4j 1.x，Spring Boot使用Logback+SLF4J
-                    同时排除旧版Jackson，使用Spring Boot统一管理的版本
-                -->
+                    鎺掗櫎Hadoop鑷甫鐨勬棩蹇楀簱锛岄伩鍏嶄笌Spring Boot鐨凩ogback鍐茬獊
+                    Hadoop榛樿浣跨敤Log4j 1.x锛孲pring Boot浣跨敤Logback+SLF4J
+                    鍚屾椂鎺掗櫎鏃х増Jackson锛屼娇鐢⊿pring Boot缁熶竴绠＄悊鐨勭増鏈?                -->
                 <exclusions>
                     <exclusion>
                         <groupId>org.slf4j</groupId>
@@ -95,7 +82,7 @@
                 </exclusions>
             </dependency>
 
-            <!-- Hadoop HDFS 客户端：用于读写HDFS文件 -->
+            <!-- Hadoop HDFS 瀹㈡埛绔細鐢ㄤ簬璇诲啓HDFS鏂囦欢 -->
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-hdfs-client</artifactId>
@@ -112,7 +99,7 @@
                 </exclusions>
             </dependency>
 
-            <!-- Hadoop MapReduce 客户端：用于编写和提交MapReduce任务 -->
+            <!-- Hadoop MapReduce 瀹㈡埛绔細鐢ㄤ簬缂栧啓鍜屾彁浜apReduce浠诲姟 -->
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-mapreduce-client-core</artifactId>
@@ -129,7 +116,7 @@
                 </exclusions>
             </dependency>
 
-            <!-- HBase 客户端：用于读写HBase表 -->
+            <!-- HBase 瀹㈡埛绔細鐢ㄤ簬璇诲啓HBase琛?-->
             <dependency>
                 <groupId>org.apache.hbase</groupId>
                 <artifactId>hbase-client</artifactId>
@@ -143,7 +130,7 @@
                         <groupId>log4j</groupId>
                         <artifactId>log4j</artifactId>
                     </exclusion>
-                    <!-- 排除HBase自带的Hadoop，使用我们统一管理的版本 -->
+                    <!-- 鎺掗櫎HBase鑷甫鐨凥adoop锛屼娇鐢ㄦ垜浠粺涓€绠＄悊鐨勭増鏈?-->
                     <exclusion>
                         <groupId>org.apache.hadoop</groupId>
                         <artifactId>*</artifactId>
@@ -151,7 +138,7 @@
                 </exclusions>
             </dependency>
 
-            <!-- HBase MapReduce 集成：用于MapReduce直接写入HBase -->
+            <!-- HBase MapReduce 闆嗘垚锛氱敤浜嶮apReduce鐩存帴鍐欏叆HBase -->
             <dependency>
                 <groupId>org.apache.hbase</groupId>
                 <artifactId>hbase-mapreduce</artifactId>
@@ -172,7 +159,7 @@
                 </exclusions>
             </dependency>
 
-            <!-- Jackson：JSON序列化/反序列化 -->
+            <!-- Jackson锛欽SON搴忓垪鍖?鍙嶅簭鍒楀寲 -->
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
@@ -189,14 +176,14 @@
                 <version>${jackson.version}</version>
             </dependency>
 
-            <!-- Lombok：减少样板代码 -->
+            <!-- Lombok锛氬噺灏戞牱鏉夸唬鐮?-->
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
                 <version>${lombok.version}</version>
             </dependency>
 
-            <!-- 本项目内部模块 -->
+            <!-- 鏈」鐩唴閮ㄦā鍧?-->
             <dependency>
                 <groupId>com.hadp</groupId>
                 <artifactId>hadp-common</artifactId>
@@ -204,13 +191,10 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
-    <!-- ============================================================ -->
-    <!-- 所有子模块共享的构建配置                                      -->
-    <!-- ============================================================ -->
+    <!-- 鎵€鏈夊瓙妯″潡鍏变韩鐨勬瀯寤洪厤缃?                                     -->
     <build>
         <plugins>
-            <!-- Maven编译器插件：设置Java 8编译 -->
+            <!-- Maven缂栬瘧鍣ㄦ彃浠讹細璁剧疆Java 8缂栬瘧 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -223,9 +207,7 @@
             </plugin>
 
             <!--
-                资源文件过滤：允许在 resources 目录下使用 ${...} 占位符
-                在构建时替换为 pom.xml 中定义的属性值
-            -->
+                璧勬簮鏂囦欢杩囨护锛氬厑璁稿湪 resources 鐩綍涓嬩娇鐢?${...} 鍗犱綅绗?                鍦ㄦ瀯寤烘椂鏇挎崲涓?pom.xml 涓畾涔夌殑灞炴€у€?            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>

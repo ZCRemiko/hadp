@@ -12,7 +12,7 @@ services:
     networks:
       - hadp_net
 
-  # ==================== Hadoop HDFS ====================
+  # Hadoop HDFS
   namenode:
     build:
       context: ./docker
@@ -67,7 +67,7 @@ services:
     depends_on:
       - namenode
 
-  # ==================== Hadoop YARN ====================
+  # Hadoop YARN
   resourcemanager:
     build:
       context: ./docker
@@ -115,7 +115,7 @@ services:
     depends_on:
       - resourcemanager
 
-  # ==================== HBase ====================
+  # HBase
   hbase-master:
     build:
       context: ./docker

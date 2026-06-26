@@ -1,7 +1,4 @@
-# ================================================================
-# Query API 服务配置 (Spring Boot application.yml)
-# ================================================================
-
+# Query API 閺堝秴濮熼柊宥囩枂 (Spring Boot application.yml)
 server:
   port: 8081
 
@@ -14,13 +11,12 @@ spring:
     deserialization:
       fail-on-unknown-properties: false
 
-# ==================== HBase 配置 ====================
+# HBase 闁板秶鐤?
 hbase:
   zookeeper:
-    # ZooKeeper 地址（HBase 通过 ZK 做分布式协调）
-    quorum: localhost
+    # ZooKeeper 閸︽澘娼冮敍鍦欱ase 闁俺绻?ZK 閸嬫艾鍨庣敮鍐ㄧ础閸楀繗鐨熼敍?    quorum: localhost
 
-# ==================== 日志配置 ====================
+# 閺冦儱绻旈柊宥囩枂
 logging:
   level:
     com.hadp: DEBUG
