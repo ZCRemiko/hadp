@@ -1,30 +1,24 @@
-# Collector 閺堝秴濮熼柊宥囩枂 (Spring Boot application.yml)
 server:
-  # 閺堝秴濮熼惄鎴濇儔缁旑垰褰?  port: 8080
+  port: 8080
 
 spring:
   application:
     name: hadp-collector
   jackson:
-    # JSON 閺冦儲婀￠弽鐓庣础
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
-    # 韫囩晫鏆?JSON 娑擃厼顦挎担娆戞畱鐎涙顔岄敍鍫滅瑝閹舵稑鍤鍌氱埗閿?    deserialization:
+    deserialization:
       fail-on-unknown-properties: false
 
-# Hadoop HDFS 闁板秶鐤?
 hadoop:
   hdfs:
-    # HDFS NameNode 閸︽澘娼?    # Docker 閻滎垰顣ㄩ敍姝╠fs://namenode:9000
-    # 閺堫剙婀村鈧崣? 閿涙dfs://localhost:9000
     uri: hdfs://hadoop:9000
-    # 閺冦儱绻旂€涙ê鍋嶉崷?HDFS 娑撳﹦娈戦弽鍦窗瑜?    log-path: /user/hadp/logs
+    log-path: /user/hadp/logs
 
-# 閺冦儱绻旈柊宥囩枂
 logging:
   level:
-    # 妞ゅ湱娲伴崠鍛畱閺冦儱绻旂痪褍鍩?    com.hadp: DEBUG
-    # 閸戝繐鐨?Hadoop 濡楀棙鐏﹂惃鍕）韫囨绶崙?    org.apache.hadoop: WARN
+    com.hadp: DEBUG
+    org.apache.hadoop: WARN
     org.apache.hbase: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

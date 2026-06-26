@@ -1,4 +1,3 @@
-# Query API 閺堝秴濮熼柊宥囩枂 (Spring Boot application.yml)
 server:
   port: 8081
 
@@ -11,12 +10,10 @@ spring:
     deserialization:
       fail-on-unknown-properties: false
 
-# HBase 闁板秶鐤?
 hbase:
   zookeeper:
-    # ZooKeeper 閸︽澘娼冮敍鍦欱ase 闁俺绻?ZK 閸嬫艾鍨庣敮鍐ㄧ础閸楀繗鐨熼敍?    quorum: localhost
+    quorum: localhost
 
-# 閺冦儱绻旈柊宥囩枂
 logging:
   level:
     com.hadp: DEBUG
